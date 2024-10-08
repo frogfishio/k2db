@@ -49,8 +49,8 @@ function copyPackageJson() {
         delete pkg.scripts;
 
         // Update paths to the `dist` directory
-        pkg.main = 'error.js';
-        pkg.types = 'error.d.ts';
+        pkg.main = 'data.js';
+        pkg.types = 'data.d.ts';
 
         return pkg;
       }, 2)

@@ -1,9 +1,9 @@
 {
   "name": "@frogfish/k2db",
-  "version": "1.0.2",
+  "version": "1.0.5",
   "description": "A data handling library for K2 applications.",
-  "main": "error.js",
-  "types": "error.d.ts",
+  "main": "data.js",
+  "types": "data.d.ts",
   "scripts": {
     "test": "jest",
     "test:coverage": "jest --coverage",
@@ -36,5 +36,9 @@
     "debug": "^4.3.7",
     "mongodb": "^6.9.0",
     "uuid": "^10.0.0"
-  }
+  },
+  "files": [
+    "data.d.ts",
+    "db.d.ts"
+  ]
 }
