@@ -1,4 +1,4 @@
-import { DB, DatabaseConfig } from "../src/db";
+import { K2DB, DatabaseConfig } from "../src/db";
 import { MongoClient, Collection } from "mongodb";
 import { v4 as uuidv4 } from "uuid"; // Import uuidv4
 
@@ -24,7 +24,7 @@ describe("DB Class - create()", () => {
     // password: 'yourPassword',
   };
 
-  let dbInstance: DB;
+  let dbInstance: K2DB;
   const collectionName = "createTestCollection";
 
   // Sample documents to use in tests
@@ -35,7 +35,7 @@ describe("DB Class - create()", () => {
 
   beforeAll(async () => {
     // Initialize the DB instance and establish a connection
-    dbInstance = new DB(config);
+    dbInstance = new K2DB(config);
     await dbInstance.init();
   });
 

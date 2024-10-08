@@ -38,7 +38,7 @@ export interface BaseDocument {
   [key: string]: any; // Allow additional properties
 }
 
-export class DB {
+export class K2DB {
   private db!: Db;
   private connection!: MongoClient;
 
@@ -313,7 +313,7 @@ export class DB {
     // Sanitize criteria
     const sanitizedCriteria = criteria.map((stage) => {
       if (stage.$match) {
-        return DB.sanitiseCriteria(stage);
+        return K2DB.sanitiseCriteria(stage);
       }
       return stage;
     });
@@ -691,7 +691,7 @@ export class DB {
     if (criteria.$match) {
       for (const key of Object.keys(criteria.$match)) {
         if (typeof criteria.$match[key] !== "string") {
-          criteria.$match[key] = DB.sanitiseCriteria({
+          criteria.$match[key] = K2DB.sanitiseCriteria({
             [key]: criteria.$match[key],
           })[key];
         } else {

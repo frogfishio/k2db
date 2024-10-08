@@ -1,9 +1,9 @@
 // src/Data.ts
 
-import { DB, BaseDocument } from "./db";
+import { K2DB, BaseDocument } from "./db";
 
-export class Data {
-  constructor(private db: DB, private owner: string) {}
+export class K2Data {
+  constructor(private db: K2DB, private owner: string) {}
 
   /**
    * Retrieves a single document by UUID.

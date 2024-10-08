@@ -1,6 +1,6 @@
 // __tests__/db.test.ts
 
-import { DB, DatabaseConfig } from "../src/db";
+import { K2DB, DatabaseConfig } from "../src/db";
 import { MongoClient, Collection } from "mongodb";
 
 // Mock the uuid module
@@ -25,11 +25,11 @@ describe("DB Class", () => {
     // password: 'yourPassword',
   };
 
-  let dbInstance: DB;
+  let dbInstance: K2DB;
 
   beforeAll(async () => {
     // Initialize the DB instance and establish a connection
-    dbInstance = new DB(config);
+    dbInstance = new K2DB(config);
     await dbInstance.init();
 
     // Ensure the testCollection has a unique index on _uuid
@@ -69,7 +69,7 @@ describe("DB Class", () => {
         // user: 'invalidUser',
         // password: 'invalidPassword',
       };
-      const badDbInstance = new DB(badConfig);
+      const badDbInstance = new K2DB(badConfig);
 
       await expect(badDbInstance.init()).rejects.toThrow(
         "Failed to connect to MongoDB"

@@ -1,6 +1,6 @@
 // __tests__/db-update-all.test.ts
 
-import { DB, DatabaseConfig } from "../src/db";
+import { K2DB, DatabaseConfig } from "../src/db";
 import { MongoClient, Collection } from "mongodb";
 
 // Mock the uuid module
@@ -25,7 +25,7 @@ describe("DB Class - updateAll()", () => {
     // password: 'yourPassword',
   };
 
-  let dbInstance: DB;
+  let dbInstance: K2DB;
   const collectionName = "updateAllTestCollection";
 
   // Sample documents to insert before each test
@@ -59,7 +59,7 @@ describe("DB Class - updateAll()", () => {
 
   beforeAll(async () => {
     // Initialize the DB instance and establish a connection
-    dbInstance = new DB(config);
+    dbInstance = new K2DB(config);
     await dbInstance.init();
 
     // Ensure the collection has a unique index on _uuid

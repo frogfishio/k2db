@@ -1,4 +1,4 @@
-import { DB, DatabaseConfig } from "../src/db";
+import { K2DB, DatabaseConfig } from "../src/db";
 import { Collection } from "mongodb";
 
 describe("DB Class - find()", () => {
@@ -15,7 +15,7 @@ describe("DB Class - find()", () => {
     ],
   };
 
-  let dbInstance: DB;
+  let dbInstance: K2DB;
   const collectionName = "findTestCollection";
 
   // Sample documents to insert before each test
@@ -56,7 +56,7 @@ describe("DB Class - find()", () => {
   ];
 
   beforeAll(async () => {
-    dbInstance = new DB(config);
+    dbInstance = new K2DB(config);
     await dbInstance.init();
 
     const collection = await (dbInstance as any).getCollection(collectionName);

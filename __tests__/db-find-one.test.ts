@@ -1,4 +1,4 @@
-import { DB, DatabaseConfig } from "../src/db";
+import { K2DB, DatabaseConfig } from "../src/db";
 import { v4 as uuidv4 } from "uuid"; // Import uuidv4
 
 // Mock the uuid module
@@ -23,7 +23,7 @@ describe("DB Class - findOne()", () => {
     // password: 'yourPassword',
   };
 
-  let dbInstance: DB;
+  let dbInstance: K2DB;
   const collectionName = "findOneTestCollection";
 
   // Sample document to insert before each test
@@ -38,7 +38,7 @@ describe("DB Class - findOne()", () => {
 
   beforeAll(async () => {
     // Initialize the DB instance and establish a connection
-    dbInstance = new DB(config);
+    dbInstance = new K2DB(config);
     await dbInstance.init();
 
     // Ensure the collection has a unique index on _uuid
