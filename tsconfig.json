@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "outDir": "./build",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "declaration": true, // Generates .d.ts files
+    "sourceMap": false, // Do not generate .js.map files
+    "declarationMap": false // Do not generate .d.ts.map files
+  },
+  "include": ["src/**/*.ts"]
+}

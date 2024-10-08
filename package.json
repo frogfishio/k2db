@@ -1,0 +1,40 @@
+{
+  "name": "@frogfish/k2db",
+  "version": "1.0.2",
+  "description": "A data handling library for K2 applications.",
+  "main": "error.js",
+  "types": "error.d.ts",
+  "scripts": {
+    "test": "jest",
+    "test:coverage": "jest --coverage",
+    "dist": "tsc && jest && gulp && cd dist && npm publish --access public",
+    "build": "tsc",
+    "build:watch": "tsc --watch"
+  },
+  "author": "El'Diablo",
+  "license": "GPL-3.0-only",
+  "devDependencies": {
+    "@types/axios": "^0.9.36",
+    "@types/debug": "^4.1.12",
+    "@types/jest": "^29.5.13",
+    "@types/mongodb": "^4.0.6",
+    "@types/uuid": "^10.0.0",
+    "jest": "^29.7.0",
+    "mongodb-memory-server": "^10.0.1",
+    "ts-jest": "^29.2.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.2",
+    "gulp": "^5.0.0",
+    "gulp-bump": "^3.2.0",
+    "gulp-clean": "^0.4.0",
+    "gulp-json-transform": "^0.5.0",
+    "gulp-tsc": "^1.3.2",
+    "gulp-typescript": "^6.0.0-alpha.1"
+  },
+  "dependencies": {
+    "@frogfish/k2error": "^1.0.1",
+    "debug": "^4.3.7",
+    "mongodb": "^6.9.0",
+    "uuid": "^10.0.0"
+  }
+}
