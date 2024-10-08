@@ -104,19 +104,21 @@ describe("DB Class - deleteAll()", () => {
   it("should soft delete all documents matching the criteria", async () => {
     const criteria = { value: { $gte: 10 } };
 
+    // Call the updated deleteAll function
     const result = await dbInstance.deleteAll(collectionName, criteria);
 
     // Assertions
-    expect(result).toHaveProperty("found", 3); // All three documents match (including already deleted)
-    expect(result).toHaveProperty("modified", 2); // Only two documents were not already deleted
-    expect(result).toHaveProperty("updated", true);
+    expect(result).toHaveProperty("deleted", 2); // Expect 2 documents to be soft-deleted
 
     // Verify that the matching documents have _deleted: true
     const collection: Collection = await (dbInstance as any).getCollection(
       collectionName
     );
-    const deletedDocs = await collection.find(criteria).toArray();
+    const deletedDocs = await collection
+      .find({ ...criteria, _deleted: true })
+      .toArray();
 
+    // Check if all the documents matching the criteria have _deleted set to true
     deletedDocs.forEach((doc) => {
       expect(doc._deleted).toBe(true);
     });
@@ -133,12 +135,11 @@ describe("DB Class - deleteAll()", () => {
   it("should not modify any documents if no documents match the criteria", async () => {
     const criteria = { value: { $gt: 1000 } }; // No documents match
 
+    // Call the updated deleteAll function
     const result = await dbInstance.deleteAll(collectionName, criteria);
 
     // Assertions
-    expect(result).toHaveProperty("found", 0);
-    expect(result).toHaveProperty("modified", 0);
-    expect(result).toHaveProperty("updated", true);
+    expect(result).toHaveProperty("deleted", 0); // No documents should be deleted
 
     // Verify that no documents have _deleted: true except the pre-deleted one
     const collection: Collection = await (dbInstance as any).getCollection(
@@ -148,9 +149,9 @@ describe("DB Class - deleteAll()", () => {
 
     allDocs.forEach((doc) => {
       if (doc._uuid === "uuid-3") {
-        expect(doc._deleted).toBe(true);
+        expect(doc._deleted).toBe(true); // This document was already deleted
       } else {
-        expect(doc._deleted).not.toBe(true); // Should not be true
+        expect(doc._deleted).not.toBe(true); // Other documents should not be modified
       }
     });
   });

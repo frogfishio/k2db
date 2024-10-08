@@ -106,9 +106,7 @@ describe("DB Class - updateAll()", () => {
     const result = await dbInstance.updateAll(collectionName, criteria, values);
 
     // Assertions
-    expect(result).toHaveProperty("found", 2); // Should be 2 after excluding soft-deleted documents
-    expect(result).toHaveProperty("modified", 2);
-    expect(result).toHaveProperty("updated", true);
+    expect(result).toHaveProperty("updated", 2); // Should be 2 after excluding soft-deleted documents
 
     // Verify that the documents were updated
     const collection: Collection = await (dbInstance as any).getCollection(
@@ -130,9 +128,7 @@ describe("DB Class - updateAll()", () => {
     const result = await dbInstance.updateAll(collectionName, criteria, values);
 
     // Assertions
-    expect(result).toHaveProperty("found", 0);
-    expect(result).toHaveProperty("modified", 0);
-    expect(result).toHaveProperty("updated", true);
+    expect(result).toHaveProperty("updated", 0); // No documents should be updated
 
     // Verify that no documents were updated
     const collection: Collection = await (dbInstance as any).getCollection(
@@ -150,7 +146,6 @@ describe("DB Class - updateAll()", () => {
     });
   });
 
-  // Adjusted assertion in the second test
   it("should update only specified fields and _updated timestamp", async () => {
     const criteria = { _owner: "user1" };
     const values = { name: "Updated Document 1" };
@@ -160,9 +155,7 @@ describe("DB Class - updateAll()", () => {
     const result = await dbInstance.updateAll(collectionName, criteria, values);
 
     // Assertions
-    expect(result).toHaveProperty("found", 1);
-    expect(result).toHaveProperty("modified", 1);
-    expect(result).toHaveProperty("updated", true);
+    expect(result).toHaveProperty("updated", 1); // One document should be updated
 
     // Verify that the specific field was updated
     const collection: Collection = await (dbInstance as any).getCollection(
@@ -204,9 +197,7 @@ describe("DB Class - updateAll()", () => {
     const result = await dbInstance.updateAll(collectionName, criteria, values);
 
     // Assertions
-    expect(result).toHaveProperty("found", 1);
-    expect(result).toHaveProperty("modified", 1);
-    expect(result).toHaveProperty("updated", true);
+    expect(result).toHaveProperty("updated", 1); // One document should be updated
 
     // Verify that the _updated timestamp was updated
     const collection: Collection = await (dbInstance as any).getCollection(

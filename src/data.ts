@@ -1,5 +1,3 @@
-// src/Data.ts
-
 import { K2DB, BaseDocument } from "./db";
 
 export class K2Data {
@@ -70,8 +68,9 @@ export class K2Data {
     collectionName: string,
     criteria: any,
     values: Partial<BaseDocument>,
-    replace?: boolean
-  ): Promise<any> {
+    replace: boolean = false
+  ): Promise<{ updated: number }> {
+    // Ensure it returns { updated: number }
     return this.db.updateAll(collectionName, criteria, values, replace);
   }
 
@@ -82,23 +81,31 @@ export class K2Data {
     collectionName: string,
     id: string,
     data: Partial<BaseDocument>,
-    replace?: boolean,
+    replace: boolean = false,
     objectTypeName?: string
-  ): Promise<any> {
+  ): Promise<{ updated: number }> {
+    // Ensure it returns { updated: number }
     return this.db.update(collectionName, id, data, replace, objectTypeName);
   }
 
   /**
    * Removes (soft deletes) multiple documents based on criteria.
    */
-  async deleteAll(collectionName: string, criteria: any): Promise<any> {
+  async deleteAll(
+    collectionName: string,
+    criteria: any
+  ): Promise<{ deleted: number }> {
+    // Ensure it returns { deleted: number }
     return this.db.deleteAll(collectionName, criteria);
   }
 
   /**
    * Removes (soft deletes) a single document by UUID.
    */
-  async delete(collectionName: string, id: string): Promise<{ id: string }> {
+  async delete(
+    collectionName: string,
+    id: string
+  ): Promise<{ deleted: number }> {
     return this.db.delete(collectionName, id);
   }
 

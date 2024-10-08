@@ -1,13 +1,13 @@
 {
   "name": "@frogfish/k2db",
-  "version": "1.0.6",
+  "version": "1.0.8",
   "description": "A data handling library for K2 applications.",
   "main": "data.js",  
   "types": "data.d.ts",  
   "scripts": {
     "test": "jest",
     "test:coverage": "jest --coverage",
-    "dist": "tsc && jest && gulp && npm publish --access public",
+    "dist": "tsc && jest && gulp && cd dist && npm publish --access public",
     "build": "tsc",
     "build:watch": "tsc --watch"
   },

@@ -421,7 +421,8 @@ export class K2DB {
     criteria: any,
     values: Partial<BaseDocument>,
     replace: boolean = false
-  ): Promise<any> {
+  ): Promise<{ updated: number }> {
+    // Return type changed to JSON object {updated: number}
     const collection = await this.getCollection(collectionName);
     debug(
       `Updating ${collectionName} with criteria: ${JSON.stringify(criteria)}`
@@ -442,11 +443,8 @@ export class K2DB {
 
     try {
       const res = await collection.updateMany(criteria, updateOperation);
-      return {
-        found: res.matchedCount,
-        modified: res.modifiedCount,
-        updated: res.acknowledged,
-      };
+      // Return the updated count in JSON format
+      return { updated: res.modifiedCount };
     } catch (err) {
       throw new K2Error(
         ServiceError.SYSTEM_ERROR,
@@ -472,9 +470,9 @@ export class K2DB {
     data: Partial<BaseDocument>,
     replace: boolean = false,
     objectTypeName?: string
-  ): Promise<any> {
+  ): Promise<{ updated: number }> {
     const collection = await this.getCollection(collectionName);
-    data._updated = Date.now();
+    data._updated = Date.now(); // Set the _updated timestamp
 
     try {
       // Call updateAll with the UUID criteria and replace flag
@@ -485,24 +483,40 @@ export class K2DB {
         replace
       );
 
-      if (res.modified === 1) {
-        return { id: id };
+      // Check if exactly one document was updated
+      if (res.updated === 1) {
+        return { updated: 1 };
       }
-      if (res.modified === 0) {
+
+      // If no document was updated, throw a NOT_FOUND error
+      if (res.updated === 0) {
         throw new K2Error(
           ServiceError.NOT_FOUND,
-          `Object in ${collectionName} not found`,
-          "sys_mdb_update2"
+          `Object in ${collectionName} with UUID ${id} not found`,
+          "sys_mdb_update_not_found"
         );
       }
+
+      // If more than one document was updated, throw a SYSTEM_ERROR
+      if (res.updated > 1) {
+        throw new K2Error(
+          ServiceError.SYSTEM_ERROR,
+          `Multiple objects in ${collectionName} were updated when only one was expected`,
+          "sys_mdb_update_multiple_found"
+        );
+      }
+
+      // Since we've handled all possible valid cases, we return undefined in case of unforeseen errors (for type safety)
+      return { updated: 0 }; // Should never reach this line, here for type safety
     } catch (err) {
       if (err instanceof K2Error) {
         throw err;
       }
+      // Catch any other unhandled errors and throw a system error
       throw new K2Error(
         ServiceError.SYSTEM_ERROR,
         `Error updating ${collectionName}`,
-        "sys_mdb_update1",
+        "sys_mdb_update_error",
         this.normalizeError(err)
       );
     }
@@ -513,14 +527,15 @@ export class K2DB {
    * @param collectionName - Name of the collection.
    * @param criteria - Removal criteria.
    */
-  async deleteAll(collectionName: string, criteria: any): Promise<any> {
+  async deleteAll(
+    collectionName: string,
+    criteria: any
+  ): Promise<{ deleted: number }> {
     const collection = await this.getCollection(collectionName);
 
-    let foundCount: number;
-
     try {
-      // Step 1: Count documents matching the original criteria
-      foundCount = await collection.countDocuments(criteria);
+      // Step 1: Count documents matching the original criteria (this is not strictly necessary if you only want the deleted count)
+      const foundCount = await collection.countDocuments(criteria);
     } catch (err) {
       throw new K2Error(
         ServiceError.SYSTEM_ERROR,
@@ -539,7 +554,7 @@ export class K2DB {
     let result;
 
     try {
-      // Perform the update
+      // Perform the update to soft delete the documents
       result = await this.updateAll(collectionName, modifiedCriteria, {
         _deleted: true,
       } as Partial<BaseDocument>);
@@ -552,10 +567,9 @@ export class K2DB {
       );
     }
 
-    // Step 3: Return the result, adjusting the 'found' count
+    // Step 3: Return the number of records that were marked as deleted
     return {
-      ...result,
-      found: foundCount, // Use the original count here
+      deleted: result.updated, // Map the updated count to 'deleted'
     };
   }
 
@@ -564,10 +578,33 @@ export class K2DB {
    * @param collectionName - Name of the collection.
    * @param id - UUID of the document.
    */
-  async delete(collectionName: string, id: string): Promise<{ id: string }> {
+  async delete(
+    collectionName: string,
+    id: string
+  ): Promise<{ deleted: number }> {
     try {
-      await this.deleteAll(collectionName, { _uuid: id });
-      return { id };
+      // Call deleteAll to soft delete the document by UUID
+      const result = await this.deleteAll(collectionName, { _uuid: id });
+
+      // Check the result of the deleteAll operation
+      if (result.deleted === 1) {
+        // Successfully deleted one document
+        return { deleted: 1 };
+      } else if (result.deleted === 0) {
+        // No document was found to delete
+        throw new K2Error(
+          ServiceError.NOT_FOUND,
+          "Document not found",
+          "sys_mdb_remove_not_found"
+        );
+      } else {
+        // More than one document was deleted, which is unexpected
+        throw new K2Error(
+          ServiceError.SYSTEM_ERROR,
+          "Multiple documents deleted when only one was expected",
+          "sys_mdb_remove_multiple_deleted"
+        );
+      }
     } catch (err) {
       throw new K2Error(
         ServiceError.SYSTEM_ERROR,
