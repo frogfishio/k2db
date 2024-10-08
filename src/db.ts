@@ -134,7 +134,10 @@ export class K2DB {
   }
 
   async get(collectionName: string, uuid: string): Promise<BaseDocument> {
-    const res = await this.findOne(collectionName, { _uuid: uuid });
+    const res = await this.findOne(collectionName, {
+      _uuid: uuid,
+      _deleted: { $ne: true },
+    });
 
     if (!res) {
       throw new K2Error(
@@ -161,6 +164,9 @@ export class K2DB {
   ): Promise<BaseDocument | null> {
     const collection = await this.getCollection(collectionName);
     const projection: any = {};
+
+    // Ensure to include the _deleted filter in criteria
+    criteria._deleted = { $ne: true };
 
     if (fields && fields.length > 0) {
       fields.forEach((field) => {
@@ -689,6 +695,8 @@ export class K2DB {
   ): Promise<{ count: number }> {
     const collection = await this.getCollection(collectionName);
     try {
+      // Ensure to include the _deleted filter in criteria
+      criteria._deleted = { $ne: true };
       const cnt = await collection.countDocuments(criteria);
       return { count: cnt };
     } catch (err) {
