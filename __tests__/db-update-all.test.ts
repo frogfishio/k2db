@@ -188,25 +188,23 @@ describe("DB Class - updateAll()", () => {
     ).rejects.toThrow("Error updating updateAllTestCollection");
   });
 
-  it("should update the _updated timestamp correctly", async () => {
-    const criteria = { _owner: "user3", _deleted: true }; // Include _deleted: true
+  it("should not update soft-deleted documents", async () => {
+    const criteria = { _owner: "user3", _deleted: true }; // Soft-deleted document
     const values = { name: "Revived Document" };
-
-    const beforeUpdate = Date.now();
 
     const result = await dbInstance.updateAll(collectionName, criteria, values);
 
     // Assertions
-    expect(result).toHaveProperty("updated", 1); // One document should be updated
+    expect(result).toHaveProperty("updated", 0); // No documents should be updated because it's soft-deleted
 
-    // Verify that the _updated timestamp was updated
+    // Verify that the document was not updated
     const collection: Collection = await (dbInstance as any).getCollection(
       collectionName
     );
     const updatedDoc = await collection.findOne({ _uuid: "uuid-3" });
 
     expect(updatedDoc).toBeDefined();
-    expect(updatedDoc!.name).toBe("Revived Document");
-    expect(updatedDoc!._updated).toBeGreaterThanOrEqual(beforeUpdate);
+    expect(updatedDoc!.name).toBe("Document 3"); // Should not have changed
+    expect(updatedDoc!._updated).toBe(1620000000000); // Original timestamp remains the same
   });
 });

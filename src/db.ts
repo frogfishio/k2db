@@ -165,9 +165,6 @@ export class K2DB {
     const collection = await this.getCollection(collectionName);
     const projection: any = {};
 
-    // Ensure to include the _deleted filter in criteria
-    criteria._deleted = { $ne: true };
-
     if (fields && fields.length > 0) {
       fields.forEach((field) => {
         projection[field] = 1;
@@ -420,37 +417,29 @@ export class K2DB {
    * @param collectionName - Name of the collection.
    * @param criteria - Update criteria.
    * @param values - Values to update or replace with.
-   * @param replace - If true, replaces the entire document (PUT), otherwise patches (PATCH).
    */
   async updateAll(
     collectionName: string,
     criteria: any,
-    values: Partial<BaseDocument>,
-    replace: boolean = false
+    values: Partial<BaseDocument>
   ): Promise<{ updated: number }> {
-    // Return type changed to JSON object {updated: number}
+    this.validateCollectionName(collectionName);
     const collection = await this.getCollection(collectionName);
     debug(
       `Updating ${collectionName} with criteria: ${JSON.stringify(criteria)}`
     );
 
     values._updated = Date.now();
-
-    // Exclude soft-deleted documents unless _deleted is explicitly specified in criteria
-    if (!("_deleted" in criteria)) {
-      criteria = {
-        ...criteria,
-        _deleted: { $ne: true },
-      };
-    }
-
-    // Determine update operation based on the replace flag
-    const updateOperation = replace ? values : { $set: values };
+    criteria = {
+      ...criteria,
+      _deleted: { $ne: true },
+    };
 
     try {
-      const res = await collection.updateMany(criteria, updateOperation);
-      // Return the updated count in JSON format
-      return { updated: res.modifiedCount };
+      const res = await collection.updateMany(criteria, { $set: values });
+      return {
+        updated: res.modifiedCount,
+      };
     } catch (err) {
       throw new K2Error(
         ServiceError.SYSTEM_ERROR,
@@ -468,34 +457,52 @@ export class K2DB {
    * @param id - UUID string to identify the document.
    * @param data - Data to update or replace with.
    * @param replace - If true, replaces the entire document (PUT), otherwise patches (PATCH).
-   * @param objectTypeName - Optional object type name.
    */
   async update(
     collectionName: string,
     id: string,
     data: Partial<BaseDocument>,
-    replace: boolean = false,
-    objectTypeName?: string
+    replace: boolean = false
   ): Promise<{ updated: number }> {
+    this.validateCollectionName(collectionName);
     const collection = await this.getCollection(collectionName);
     data._updated = Date.now(); // Set the _updated timestamp
 
     try {
-      // Call updateAll with the UUID criteria and replace flag
-      const res = await this.updateAll(
-        collectionName,
-        { _uuid: id } as Filter<BaseDocument>,
-        data,
-        replace
-      );
+      let res;
+
+      // If replacing the document, first get the original document
+      if (replace) {
+        // Get the original document to preserve fields starting with underscore
+        const originalDoc = await this.get(collectionName, id);
+
+        // Override all fields starting with underscore from the original document
+        const fieldsToPreserve = Object.keys(originalDoc).reduce((acc, key) => {
+          if (key.startsWith("_")) {
+            acc[key] = originalDoc[key];
+          }
+          return acc;
+        }, {} as Partial<BaseDocument>);
+
+        // Merge the preserved fields into the data
+        data = { ...data, ...fieldsToPreserve };
+
+        data._updated = Date.now();
+
+        // Now replace the document with the merged data
+        res = await collection.replaceOne({ _uuid: id }, data);
+      } else {
+        // If patching, just update specific fields using $set
+        res = await collection.updateOne({ _uuid: id }, { $set: data });
+      }
 
       // Check if exactly one document was updated
-      if (res.updated === 1) {
+      if (res.modifiedCount === 1) {
         return { updated: 1 };
       }
 
       // If no document was updated, throw a NOT_FOUND error
-      if (res.updated === 0) {
+      if (res.modifiedCount === 0) {
         throw new K2Error(
           ServiceError.NOT_FOUND,
           `Object in ${collectionName} with UUID ${id} not found`,
@@ -503,8 +510,8 @@ export class K2DB {
         );
       }
 
-      // If more than one document was updated, throw a SYSTEM_ERROR
-      if (res.updated > 1) {
+      // If more than one document was updated (though this should never happen with a single UUID), throw a SYSTEM_ERROR
+      if (res.modifiedCount > 1) {
         throw new K2Error(
           ServiceError.SYSTEM_ERROR,
           `Multiple objects in ${collectionName} were updated when only one was expected`,
@@ -512,8 +519,8 @@ export class K2DB {
         );
       }
 
-      // Since we've handled all possible valid cases, we return undefined in case of unforeseen errors (for type safety)
-      return { updated: 0 }; // Should never reach this line, here for type safety
+      // Return updated: 0 if no documents were modified (though this is unlikely)
+      return { updated: 0 };
     } catch (err) {
       if (err instanceof K2Error) {
         throw err;
@@ -537,33 +544,12 @@ export class K2DB {
     collectionName: string,
     criteria: any
   ): Promise<{ deleted: number }> {
-    const collection = await this.getCollection(collectionName);
-
+    this.validateCollectionName(collectionName);
     try {
-      // Step 1: Count documents matching the original criteria (this is not strictly necessary if you only want the deleted count)
-      const foundCount = await collection.countDocuments(criteria);
-    } catch (err) {
-      throw new K2Error(
-        ServiceError.SYSTEM_ERROR,
-        `Error updating ${collectionName}`,
-        "sys_mdb_deleteall_count",
-        this.normalizeError(err)
-      );
-    }
-
-    // Step 2: Modify criteria to exclude already deleted documents
-    const modifiedCriteria = {
-      ...criteria,
-      _deleted: { $ne: true },
-    };
-
-    let result;
-
-    try {
-      // Perform the update to soft delete the documents
-      result = await this.updateAll(collectionName, modifiedCriteria, {
+      let result = await this.updateAll(collectionName, criteria, {
         _deleted: true,
       } as Partial<BaseDocument>);
+      return { deleted: result.updated };
     } catch (err) {
       throw new K2Error(
         ServiceError.SYSTEM_ERROR,
@@ -572,11 +558,6 @@ export class K2DB {
         this.normalizeError(err)
       );
     }
-
-    // Step 3: Return the number of records that were marked as deleted
-    return {
-      deleted: result.updated, // Map the updated count to 'deleted'
-    };
   }
 
   /**
@@ -695,8 +676,6 @@ export class K2DB {
   ): Promise<{ count: number }> {
     const collection = await this.getCollection(collectionName);
     try {
-      // Ensure to include the _deleted filter in criteria
-      criteria._deleted = { $ne: true };
       const cnt = await collection.countDocuments(criteria);
       return { count: cnt };
     } catch (err) {

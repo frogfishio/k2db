@@ -67,11 +67,10 @@ export class K2Data {
   async updateAll(
     collectionName: string,
     criteria: any,
-    values: Partial<BaseDocument>,
-    replace: boolean = false
+    values: Partial<BaseDocument>
   ): Promise<{ updated: number }> {
     // Ensure it returns { updated: number }
-    return this.db.updateAll(collectionName, criteria, values, replace);
+    return this.db.updateAll(collectionName, criteria, values);
   }
 
   /**
@@ -81,11 +80,10 @@ export class K2Data {
     collectionName: string,
     id: string,
     data: Partial<BaseDocument>,
-    replace: boolean = false,
-    objectTypeName?: string
+    replace: boolean = false
   ): Promise<{ updated: number }> {
     // Ensure it returns { updated: number }
-    return this.db.update(collectionName, id, data, replace, objectTypeName);
+    return this.db.update(collectionName, id, data, replace);
   }
 
   /**
